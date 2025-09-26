@@ -1,29 +1,23 @@
 
-const CACHE_NAME = 'aiic-pwa-v1';
+const CACHE = 'aiic-full-v1';
 const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './styles.css',
-  './assets/logo-ui.png'
+  './','./index.html','./styles.css','./manifest.json','./sw.js',
+  './services.html','./calculator.html','./branches.html','./claims.html','./contact.html',
+  './app.js',
+  './assets/logo-ui.png','./assets/icon-192.png','./assets/icon-384.png','./assets/icon-512.png'
 ];
-
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
-  );
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
 });
-
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => 
-      Promise.all(keys.map(k => k !== CACHE_NAME ? caches.delete(k) : null))
-    )
-  );
+self.addEventListener('activate', e => {
+  e.waitUntil(self.clients.claim());
 });
-
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request))
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
+      const copy = resp.clone();
+      caches.open(CACHE).then(c => c.put(e.request, copy));
+      return resp;
+    }).catch(() => caches.match('./')))
   );
 });
